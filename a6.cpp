@@ -91,27 +91,45 @@ class out_of_bounds { };    // exception
 template<typename T>
 class carray_simple_set : public virtual simple_set<T> {
     // 'virtual' on simple_set ensures single copy if multiply inherited
-    // You'll need some data members here.
+    T low;
+    T high;
+    T arr [5] = {};
+    int nextOpen = 0;
+    int numElements = 5;
+
   public:
-    // fill in these methods:
     carray_simple_set(const T l, const T h) {   // constructor
-        // replace this line:
-        (void) l;  (void) h;
+        low = l;
+        high = h;
     }
     virtual ~carray_simple_set() {              // destructor
-        // your code here
+        delete this; //idk what to put in a destructor 
     }
     virtual carray_simple_set<T>& operator+=(const T item) {
-        // replace this line:
-        (void) item;  return *this;
+        cout << "inserting: " << item << std::endl;
+        if(item < low || item >= high){
+            throw out_of_bounds();
+        }
+        arr[nextOpen] = item;
+        nextOpen++; //redefine for inserting in middle of array if nextOpen is a prev. deleted space
+        return *this;
     }
     virtual carray_simple_set<T>& operator-=(const T item) {
-        // replace this line:
-        (void) item;  return *this;
+        if(item < low || item >= high){
+            throw out_of_bounds();
+        }
+        //todo: search array for element and then delete it 
+        return *this;
     }
     virtual bool contains(const T& item) const {
         // replace this line:
         (void) item;  return true;
+    }
+
+    void print(){
+        for(int i = 0; i<numElements; i++){
+            cout << arr[i] << std::endl;
+        }
     }
 };
 
@@ -350,9 +368,10 @@ int main() {
 
     // Some miscellaneous code to get you started on testing your sets.
     // The following should work:
-
+/*
     std_simple_set<int> R;
     R += 3;
+    
     cout << "3 is " << (R.contains(3) ? "" : "not ") << "in R\n";
     cout << "5 is " << (R.contains(5) ? "" : "not ") << "in R\n";
 
@@ -399,4 +418,23 @@ int main() {
     hashed_simple_set<int, cast_to_int<int>> H(100);
 
     bin_search_simple_set<double> J(100);
+*/
+    carray_simple_set<int>* test = new carray_simple_set<int>(1,5);
+    //(*test).print();
+
+    //*test += 2; // * required
+   // *test += 1;
+    //*test += 10;
+    //test->
+    //(*test).print();
+
+    carray_simple_set<weekday>* V = new carray_simple_set<weekday>(mon, (weekday)5);
+    *V += mon;
+    *V += tue;
+    *V += wed;
+    *V += thu;
+    //*V += (weekday)5; //OUT OF BOUNDS
+    V->print();
+    
+
 }
