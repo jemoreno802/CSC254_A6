@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string.h>
 #include <type_traits>
+#include <sstream> 
 using std::set;
 using std::cout;
 using std::string;
@@ -79,6 +80,15 @@ class std_simple_set : public virtual simple_set<T>, protected set<T> {
     }
 };
 
+
+template<typename T>
+static std::string toBinaryString(const T& x)
+{
+    std::stringstream ss;
+    ss << std::bitset<sizeof(T) * 8>(x);
+    return ss.str();
+}
+
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Characteristic array implementation of set.
@@ -93,9 +103,7 @@ class carray_simple_set : public virtual simple_set<T> {
     // 'virtual' on simple_set ensures single copy if multiply inherited
     T low;
     T high;
-    T arr [5] = {};
-    int nextOpen = 0;
-    int numElements = 5;
+    unsigned long int arr [3] = {};
 
   public:
     carray_simple_set(const T l, const T h) {   // constructor
@@ -106,29 +114,38 @@ class carray_simple_set : public virtual simple_set<T> {
         delete this; //idk what to put in a destructor 
     }
     virtual carray_simple_set<T>& operator+=(const T item) {
-        cout << "inserting: " << item << std::endl;
         if(item < low || item >= high){
             throw out_of_bounds();
         }
-        arr[nextOpen] = item;
-        nextOpen++; //redefine for inserting in middle of array if nextOpen is a prev. deleted space
+        cout << "inserting " << item << std::endl;
+        unsigned long int number;
+        if(item < 64){
+            //item is in first word
+            arr[0] |= 1UL << item;            
+        }
         return *this;
     }
     virtual carray_simple_set<T>& operator-=(const T item) {
+        // int nthBit = item;
         if(item < low || item >= high){
             throw out_of_bounds();
         }
-        //todo: search array for element and then delete it 
+        cout << "removing " << item << std::endl;
+        unsigned long int number;
+        if(item < 64){
+            arr[0] &= ~(1UL << item);// item is in first word
+        }
         return *this;
+        
     }
     virtual bool contains(const T& item) const {
-        // replace this line:
-        (void) item;  return true;
+        bool contained = ((arr[0] >> item) & 1U) == 1; //change to depend on which word
+        return contained;
     }
-
     void print(){
-        for(int i = 0; i<numElements; i++){
-            cout << arr[i] << std::endl;
+        for(int i = 0; i<3; i++){
+            //cout << i << ": " << arr[i] << std::endl;
+            cout << toBinaryString(arr[i]) << std::endl;
         }
     }
 };
@@ -551,12 +568,16 @@ int main() {
     //(*test).print();
 
     carray_simple_set<weekday>* V = new carray_simple_set<weekday>(mon, (weekday)5);
-    *V += mon;
+   // *V += mon;
     *V += tue;
-    *V += wed;
+   // *V += wed;
     *V += thu;
     //*V += (weekday)5; //OUT OF BOUNDS
     V->print();
-    
+    cout << "Tuesday: " << V->contains(tue) << std::endl;
+    *V -= tue;
+    *V -= thu;
+    V->print();
+    cout << "Tuesday: " << V->contains(tue) << std::endl;
 
 }
