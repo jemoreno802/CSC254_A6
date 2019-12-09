@@ -224,126 +224,119 @@ class bin_search_simple_set : public virtual simple_set<T> {
     }
     virtual ~bin_search_simple_set<T, C>() { }
 
+    /* Data structure methods */
+    
+    //Node creation
+    struct node* createNode(T value)
+    {
+        struct node* temp = (struct node*)malloc(sizeof(struct node));
+        temp->key = value;
+        temp->left = temp->right = NULL;
+        return temp;
+    }
+
+    //In-order print of the binary search tree
+    void printBST(struct node* root)
+    {
+        if (root)
+        {
+            printBST(root->left);
+            printf("%d ", root->key);
+            printBST(root->right);
+        }
+    }
+    
+    //Attempts to insert a new node at a given subtree
+    struct node* r_insert(struct node* node, T value)
+    {
+        if (!node)
+        {
+            struct node* newnode = createNode(value);
+            return newnode; //Empty case
+        }
+
+        if (cmp.precedes(value, node->value))
+            node->left = r_insert(node->left, value);
+        else
+            node->right = r_insert(node->right, value);
+
+        return node;
+    }
+
+    //Finds a subtree's smallest value node, used for deletion mostly
+    struct node* smallestNode(struct node* node)
+    {
+        struct node* current = node;
+
+        while (current && current->left)//Iterates until it's at the bottom left
+            current = current->left;
+
+        return current;
+    }
+
+    //Recursivley attempts to remove a node of given value within the subtree
+    struct node* r_deleteNode(struct node* root, T value)
+    {
+        // No item found, do nothing
+        if (!root) return root;
+
+        //At target value
+        if (cmp.equals(value, root->value)) 
+        {
+            if (!root->left)//Only right child present
+            {
+                struct node* temp = root->right;
+                free(root);
+                return temp;
+            }
+            else if (!root->right)//Only left child present
+            {
+                struct node* temp = root->left;
+                free(root);
+                return temp;
+            }
+
+            //Both nodes present
+            struct node* temp = smallestNode(root->right);//Find replacement value
+            root->value = temp->value;//Replace value
+            root->right = r_deleteNode(root->right, temp->value);//Remove the old ref to replacer
+        }
+        //Smaller value
+        else if (cmp.precedes(value, root->value))
+            root->left = r_deleteNode(root->left, value);
+
+        //Must be larger value
+        else
+        {
+           root->right = r_deleteNode(root->right, value);
+        }
+        return root;
+    }
+
 	// inserts item into set
 	// returns a ref so you can say, e.g.
 	// S += a += b += c;
     virtual bin_search_simple_set<T, C>& operator+=(const T item){
-        if (!root) //No root yet
-		{
-			root->value = item;
-		}
+        if (root)
+        {
+            r_insert(root, item);
+        }
+        else //If there's no root yet, assign it
+        {
+            root = r_insert(root, item);
+        }
 
-		struct node* current = root;
-		bool placed = false;
-		while (!placed)
-		{
-			//Check if already in set
-			if (cmp.equals(item, current->value))
-			{
-				(void)item; return *this; //Return if already in set
-			} 
-			else if (cmp.precedes(item, current->value))//Less than current
-			{
-				//Does it have a left child? No -> make it left child, Yes -> loop back
-				if (!current->left)
-				{
-					struct node* newnode;
-					newnode->value = item;
-					current->left = newnode;
-					placed = true;
-				}
-				else
-				{
-					current = current->left;
-				}
-			}
-			else { //Greater than current
-				//Does it have a right child? No -> make it right child, Yes -> loop back
-				if (!current->right)
-				{
-					struct node* newnode;
-					newnode->value = item;
-					current->right = newnode;
-					placed = true;
-				}
-				else
-				{
-					current = current->right;
-				}
-			}
-		}
-		(void) item; return *this;
+        (void) item; return *this;
     }
 
 	// removes item from set, if it was there (otherwise does nothing)
     virtual bin_search_simple_set<T, C>& operator-=(const T item) {
-		if (!root || cmp.equals(item, root->value) //No items -> return
-		{
-			root = NULL;
-			(void)item; return *this;
-		}
+        if (root)
+        {
+            r_delete(root, item);
+        }
 
-		struct node* current = root;
-		struct node* current_parent;
-		bool removed = false;
-		while (!removed)
-		{
-			//Check current for leaf condition
-			if (cmp.equals(item, current->value))
-			{
-				//TODO Remove item and set children
-				if (current->left && !current->right) //Only right is null
-				{
-					current = current->left;
-				} 
-				else if (current->right && !current->left) //Only left is null
-				{
-					current = current->right;
-				}
-				else if (!current->left && !current->right)// Both children null
-				{
-					free(current);
-				}
-				else //Both nodes present
-				{
-					struct node* current_search = current->right;
-
-					// Find left-most leaf from current
-					while (current_search && current_search->left != NULL)
-						current_search = current_search->left;
-
-					current = current_search;
-				}
-				removed = true;
-			}
-			else if (cmp.precedes(item, current->value))//Less than current
-			{
-				//Does it have a left child? No -> return success, Yes -> goto left child
-				if (!current->left)
-				{
-					removed = true;
-				}
-				else
-				{
-					current_parent = current;
-					current = current->left;
-				}
-			}
-			else { //Greater than current
-				   //Does it have a right child? No -> return success, Yes -> goto right child
-				if (!current->right)
-				{
-					removed = true;
-				}
-				else
-				{
-					current_parent = current;
-					current = current->right;
-				}
-			}
-		}
         (void) item; return *this;
-
     }
 
 	// and some methods
@@ -579,5 +572,7 @@ int main() {
     *V -= thu;
     V->print();
     cout << "Tuesday: " << V->contains(tue) << std::endl;
+
+    bin_search_simple_set<double> J(100);
 
 }
