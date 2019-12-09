@@ -13,6 +13,7 @@
 #include <string.h>
 #include <type_traits>
 #include <sstream> 
+#include <bitset>
 using std::set;
 using std::cout;
 using std::string;
@@ -25,12 +26,12 @@ template<typename T>
 class comp {
   public:
     bool precedes(const T& a, const T& b) const {
-        // replace this line:
-        (void) a;  (void) b;  return true;
+        // replace this line 
+	(void) a;  (void) b;  return a < b;
     }
     bool equals(const T& a, const T& b) const {
         // replace this line:
-        (void) a;  (void) b;  return true;
+        (void) a;  (void) b;  return a == b;
     }
 };
 
@@ -215,12 +216,16 @@ class bin_search_simple_set : public virtual simple_set<T> {
 		node* right;
 	};
 	
-	struct node* root;
 	C cmp;
+	int current_count = 0;
+	int max_count;
 
   public:
+    struct node* root; 
+
     bin_search_simple_set(const double n){
-        (void) n;
+            max_count = n;
+	    (void) n;
     }
     virtual ~bin_search_simple_set<T, C>() { }
 
@@ -229,10 +234,11 @@ class bin_search_simple_set : public virtual simple_set<T> {
     //Node creation
     struct node* createNode(T value)
     {
-        struct node* temp = (struct node*)malloc(sizeof(struct node));
-        temp->key = value;
-        temp->left = temp->right = NULL;
-        return temp;
+        struct node* newNode = (struct node*)malloc(sizeof(struct node));
+        newNode->value = value;
+        newNode->left = NULL;
+       	newNode->right = NULL;
+        return newNode;
     }
 
     //In-order print of the binary search tree
@@ -241,7 +247,7 @@ class bin_search_simple_set : public virtual simple_set<T> {
         if (root)
         {
             printBST(root->left);
-            printf("%d ", root->key);
+            printf("%d ", root->value);
             printBST(root->right);
         }
     }
@@ -251,8 +257,11 @@ class bin_search_simple_set : public virtual simple_set<T> {
     {
         if (!node)
         {
-            struct node* newnode = createNode(value);
-            return newnode; //Empty case
+	    //Check bounds for insertion
+	    if(current_count == max_count) throw overflow();
+            current_count++;
+	    struct node* newnode = createNode(value);
+	    return newnode; //Empty case
         }
 
         if (cmp.precedes(value, node->value))
@@ -282,7 +291,8 @@ class bin_search_simple_set : public virtual simple_set<T> {
 
         //At target value
         if (cmp.equals(value, root->value)) 
-        {
+        { 
+	    current_count--;//Removing item reduces count
             if (!root->left)//Only right child present
             {
                 struct node* temp = root->right;
@@ -302,9 +312,9 @@ class bin_search_simple_set : public virtual simple_set<T> {
             root->right = r_deleteNode(root->right, temp->value);//Remove the old ref to replacer
         }
         //Smaller value
-        else if (cmp.precedes(value, root->value))
-            root->left = r_deleteNode(root->left, value);
-
+        else if (cmp.precedes(value, root->value)){ 
+		root->left = r_deleteNode(root->left, value);
+	}
         //Must be larger value
         else
         {
@@ -323,7 +333,7 @@ class bin_search_simple_set : public virtual simple_set<T> {
         }
         else //If there's no root yet, assign it
         {
-            root = r_insert(root, item);
+	    root = r_insert(root, item);
         }
 
         (void) item; return *this;
@@ -333,7 +343,7 @@ class bin_search_simple_set : public virtual simple_set<T> {
     virtual bin_search_simple_set<T, C>& operator-=(const T item) {
         if (root)
         {
-            r_delete(root, item);
+            r_deleteNode(root, item);
         }
 
         (void) item; return *this;
@@ -551,6 +561,7 @@ int main() {
 
     bin_search_simple_set<double> J(100);
 */
+    /*	
     carray_simple_set<int>* test = new carray_simple_set<int>(1,5);
     //(*test).print();
 
@@ -572,7 +583,16 @@ int main() {
     *V -= thu;
     V->print();
     cout << "Tuesday: " << V->contains(tue) << std::endl;
+    */
 
-    bin_search_simple_set<double> J(100);
-
+    bin_search_simple_set<int>* test = new bin_search_simple_set<int>(5);
+    *test += 2;
+    *test += -1;
+    *test += 5;
+    *test += 3;
+    *test += 4;
+    *test -= 3;
+    *test += 6;
+    *test -= 3;
+    test->printBST(test->root);
 }
