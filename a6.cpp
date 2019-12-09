@@ -192,26 +192,148 @@ template<typename T, typename C = comp<T>>
 class bin_search_simple_set : public virtual simple_set<T> {
     // 'virtual' on simple_set ensures single copy if multiply inherited
     // You'll need some data members here.
+	struct node {
+		T value;
+		node* left;
+		node* right;
+	};
+	
+	struct node* root;
+	C cmp;
+
   public:
     bin_search_simple_set(const double n){
         (void) n;
     }
     virtual ~bin_search_simple_set<T, C>() { }
+
+	// inserts item into set
+	// returns a ref so you can say, e.g.
+	// S += a += b += c;
     virtual bin_search_simple_set<T, C>& operator+=(const T item){
-        (void) item; return *this;
+        if (!root) //No root yet
+		{
+			root->value = item;
+		}
+
+		struct node* current = root;
+		bool placed = false;
+		while (!placed)
+		{
+			//Check if already in set
+			if (cmp.equals(item, current->value))
+			{
+				(void)item; return *this; //Return if already in set
+			} 
+			else if (cmp.precedes(item, current->value))//Less than current
+			{
+				//Does it have a left child? No -> make it left child, Yes -> loop back
+				if (!current->left)
+				{
+					struct node* newnode;
+					newnode->value = item;
+					current->left = newnode;
+					placed = true;
+				}
+				else
+				{
+					current = current->left;
+				}
+			}
+			else { //Greater than current
+				//Does it have a right child? No -> make it right child, Yes -> loop back
+				if (!current->right)
+				{
+					struct node* newnode;
+					newnode->value = item;
+					current->right = newnode;
+					placed = true;
+				}
+				else
+				{
+					current = current->right;
+				}
+			}
+		}
+		(void) item; return *this;
     }
-        // inserts item into set
-        // returns a ref so you can say, e.g.
-        // S += a += b += c;
+
+	// removes item from set, if it was there (otherwise does nothing)
     virtual bin_search_simple_set<T, C>& operator-=(const T item) {
+		if (!root || cmp.equals(item, root->value) //No items -> return
+		{
+			root = NULL;
+			(void)item; return *this;
+		}
+
+		struct node* current = root;
+		struct node* current_parent;
+		bool removed = false;
+		while (!removed)
+		{
+			//Check current for leaf condition
+			if (cmp.equals(item, current->value))
+			{
+				//TODO Remove item and set children
+				if (current->left && !current->right) //Only right is null
+				{
+					current = current->left;
+				} 
+				else if (current->right && !current->left) //Only left is null
+				{
+					current = current->right;
+				}
+				else if (!current->left && !current->right)// Both children null
+				{
+					free(current);
+				}
+				else //Both nodes present
+				{
+					struct node* current_search = current->right;
+
+					// Find left-most leaf from current
+					while (current_search && current_search->left != NULL)
+						current_search = current_search->left;
+
+					current = current_search;
+				}
+				removed = true;
+			}
+			else if (cmp.precedes(item, current->value))//Less than current
+			{
+				//Does it have a left child? No -> return success, Yes -> goto left child
+				if (!current->left)
+				{
+					removed = true;
+				}
+				else
+				{
+					current_parent = current;
+					current = current->left;
+				}
+			}
+			else { //Greater than current
+				   //Does it have a right child? No -> return success, Yes -> goto right child
+				if (!current->right)
+				{
+					removed = true;
+				}
+				else
+				{
+					current_parent = current;
+					current = current->right;
+				}
+			}
+		}
         (void) item; return *this;
 
     }
-        // removes item from set, if it was there (otherwise does nothing)
+
+	// and some methods
     virtual bool contains(const T& item) const {
         (void) item; return false;  
     }
-    // and some methods
+
 };
 
 //===============================================================
