@@ -704,7 +704,7 @@ int main() {
     
     test->printBST(test->root);
     printf("%d", test->contains(3));
-*/
+
     hashed_simple_set<double>* hashtest = new hashed_simple_set<double>(10);
    *hashtest += 5.f;
    *hashtest += 4.f;
@@ -712,4 +712,17 @@ int main() {
    *hashtest -= 4.f;
    
    printf("%d", hashtest->contains(4.f));
+   */
+   
+   bin_search_simple_set<const char*>* stringtest = new bin_search_simple_set<const char*>(10);
+  
+   *stringtest += "aeet";
+   *stringtest += "zeet";
+   *stringtest += "yeet";
+   *stringtest += "woooop";
+   *stringtest -= "yeet";
+   printf("%d",stringtest->contains("yeet"));
+   printf("%d",stringtest->contains("aeet"));
+   printf("%d",stringtest->contains("zeet"));
+   
 }
