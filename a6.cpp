@@ -159,9 +159,10 @@ class carray_simple_set : public virtual simple_set<T> {
 template<typename T>
 class cast_to_int {
   public:
-    int operator()(const T n) {
-        return (int) n;
-    }
+int operator()(const T n) {
+	printf("Yee");
+	return (int) n;
+}
 };
 
 // Hash table implementation of set.
@@ -173,28 +174,123 @@ class cast_to_int {
 class overflow { };         // exception
 template<typename T, typename F = cast_to_int<T>>
 class hashed_simple_set : public virtual simple_set<T> {
-    // 'virtual' on simple_set ensures single copy if multiply inherited
-    // You'll need some data members here.
-    // I recommend you pick a hash table size p that is a prime
-    // number >= n, use F(e) % p as your hash function, and rehash
-    // with kF(e) % p after the kth collision.  (But make sure that
-    // F(e) is never 0.)
-  public:
-    hashed_simple_set(const int n) {    // constructor
-        // replace this line:
-        (void) n;
-    }
-    virtual ~hashed_simple_set() { }    // destructor
-    virtual hashed_simple_set<T, F>& operator+=(const T item) {
-        // replace this line:
+// 'virtual' on simple_set ensures single copy if multiply inherited
+// You'll need some data members here.
+// I recommend you pick a hash table size p that is a prime
+// number >= n, use F(e) % p as your hash function, and rehash
+// with kF(e) % p after the kth collision.  (But make sure that
+// F(e) is never 0.)
+struct hashnode {
+T value;
+hashnode* next;
+};
+
+struct hashnode* createHashNode(T value)
+{
+struct hashnode* newNode = (struct hashnode*)malloc(sizeof(struct hashnode));
+newNode->value = value;
+newNode->next = NULL;
+return newNode;
+};
+
+hashnode** hashtable;
+int max_count;
+int current_count;
+int table_size;	
+
+public:
+//Constructor
+hashed_simple_set(const int n) {   
+hashtable = new hashnode*[n];
+table_size = n;
+for (int i = 0; i < table_size; i++)
+{
+  hashtable[i] = NULL;
+}
+
+(void) n;
+}
+
+//Destructor
+virtual ~hashed_simple_set() 
+{
+for (int i = 0; i < table_size; ++i)
+{
+hashnode* each = hashtable[i];
+while(each)
+{
+hashnode* prev = each;
+each = each->next;
+delete prev;
+}
+}
+delete[] hashtable;
+} 
+
+/* Data structure methods */
+int hash(int value) const
+{
+return value % table_size;
+}
+
+virtual hashed_simple_set<T, F>& operator+=(const T item) {
+	int hashed = hash(item);//Passive call to operator?
+	hashnode* last_node = NULL;
+	hashnode* current_node = hashtable[hashed];//Find node at correct bucket
+	while(current_node)
+	{
+	  last_node = current_node;
+	  current_node = current_node->next;
+	}
+
+	if(!current_node)
+	{
+	  current_node = createHashNode(item);
+	  if (!last_node)
+	  {
+	    hashtable[hashed] = current_node;
+	  }
+	  else 
+  	  {
+	    last_node->next = current_node;
+	  }
+	} 
+	else 
+	{
+	  current_node->value = item;
+	}
+
         (void) item;  return *this;
     }
-    virtual hashed_simple_set<T, F>& operator-=(const T item) {
-        // replace this line:
-        (void) item;  return *this;
+
+virtual hashed_simple_set<T, F>& operator-=(const T item) {
+	int hashed = hash(item);//Passive call to operator?
+	hashnode* last_node = NULL;
+	hashnode* current_node = hashtable[hashed];//Find node at correct bucket
+	
+	while(current_node)
+	{
+	  if (current_node->value == item)
+	  {
+	    if(last_node)
+	    {
+	      last_node->next = current_node->next;
+	    }
+	   delete current_node;
+           (void) item; return *this;	  }
+	   current_node = current_node->next;
+	}  
+	(void) item;  return *this;
     }
-    virtual bool contains(const T& item) const {
-        // replace this line:
+
+    virtual bool contains(const T& item) const { 
+	int hashed = hash(item);
+	hashnode* current_node = hashtable[hashed];
+	while (current_node)
+	{
+	  if(current_node->value == item) { (void) item; return true; }
+	  current_node = current_node->next;
+	}	
         (void) item;  return false;
     }
 };
@@ -595,7 +691,7 @@ int main() {
     V->print();
     cout << "Tuesday: " << V->contains(tue) << std::endl;
     */
-
+/*
     bin_search_simple_set<int>* test = new bin_search_simple_set<int>(5);
     *test += 2;
     *test += -1;
@@ -608,4 +704,12 @@ int main() {
     
     test->printBST(test->root);
     printf("%d", test->contains(3));
+*/
+    hashed_simple_set<double>* hashtest = new hashed_simple_set<double>(10);
+   *hashtest += 5.f;
+   *hashtest += 4.f;
+   *hashtest += 4.f;
+   *hashtest -= 4.f;
+   
+   printf("%d", hashtest->contains(4.f));
 }
