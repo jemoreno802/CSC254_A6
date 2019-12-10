@@ -323,6 +323,17 @@ class bin_search_simple_set : public virtual simple_set<T> {
         return root;
     }
 
+    bool r_contains(struct node* root, T value) const
+    {
+	
+	if (!root) return false;
+	if (cmp.equals(root->value, value)) return true;
+	
+	if (cmp.precedes(value, root->value))
+	   return r_contains(root->left, value);
+    	else return r_contains(root->right, value);
+    }
+
 	// inserts item into set
 	// returns a ref so you can say, e.g.
 	// S += a += b += c;
@@ -351,7 +362,7 @@ class bin_search_simple_set : public virtual simple_set<T> {
 
 	// and some methods
     virtual bool contains(const T& item) const {
-        (void) item; return false;  
+        (void) item; return r_contains(root, item);  
     }
 
 };
@@ -594,5 +605,7 @@ int main() {
     *test -= 3;
     *test += 6;
     *test -= 3;
+    
     test->printBST(test->root);
+    printf("%d", test->contains(3));
 }
